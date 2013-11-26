@@ -642,11 +642,19 @@ function Get-SMSCard {
         [Parameter(Mandatory=$false,Position=3,ValueFromPipelineByPropertyName=$true,HelpMessage="Card holders First name")]
         [alias("GivenName")]
 		[String]$FirstName,
+        [Parameter(Mandatory=$false,Position=4,ValueFromPipelineByPropertyName=$false,HelpMessage="Return all fields")]
+        [switch] $Extended,
         [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
         [object]$SMSConnection=$DefaultSMSServerConnection
 	)
 	Process {
-        [String] $SQLCommand = "Select * from ViewSMSCardHolders"
+
+        [String] $SQLCommand = ""
+        if ($Extended) {
+            $SQLCommand = "Select * from ViewSMSCardHolders"
+        } else {
+            $SQLCommand = "Select CardID, FirstName, LastName, InitLet, EmployeeNumber, Visitor, CompanyID, CustomerCodeNumber, CardNumber, PrimaryCard, PINNumber, Inactive, ActiveDateTime, InactiveDateTime, ExpirationDateTime from ViewSMSCardHolders"
+        }
 
         [String]$WHERE = ""
 
