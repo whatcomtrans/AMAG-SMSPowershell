@@ -274,15 +274,15 @@ function Enable-SMSCard {
 function Set-SMSCard {
 	[CmdletBinding(SupportsShouldProcess=$true)]
 	Param(
-		[Parameter(Mandatory=$false,Position=0,ValueFromPipeline=$true,HelpMessage="Card number")]
+		[Parameter(Mandatory=$false,Position=0,ValueFromPipelineByPropertyName=$true,HelpMessage="Card number")]
 		[int]$CardNumber,
-        [Parameter(Mandatory=$false,Position=0,ValueFromPipelineByPropertyName=$true,HelpMessage="Employee reference number, typically the employee number or employee ID.  If passed ADUser object, uses EmployeeID")]
+        [Parameter(Mandatory=$false,Position=1,ValueFromPipelineByPropertyName=$true,HelpMessage="Employee reference number, typically the employee number or employee ID.  If passed ADUser object, uses EmployeeID")]
         [alias("EmployeeID")]
 		[String]$EmployeeReference,
-        [Parameter(Mandatory=$false,Position=1,ValueFromPipelineByPropertyName=$true,HelpMessage="Card holders Last name")]
+        [Parameter(Mandatory=$false,Position=2,ValueFromPipelineByPropertyName=$true,HelpMessage="Card holders Last name")]
         [alias("Surname")]
 		[String]$LastName,
-        [Parameter(Mandatory=$false,Position=2,ValueFromPipelineByPropertyName=$true,HelpMessage="Card holders First name")]
+        [Parameter(Mandatory=$false,Position=3,ValueFromPipelineByPropertyName=$true,HelpMessage="Card holders First name")]
         [alias("GivenName")]
 		[String]$FirstName,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="Card holders Middle name")]
