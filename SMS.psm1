@@ -383,6 +383,10 @@ function Add-SMSCard {
             $RecordNamedValues = $RecordNamedValues + $OtherNamedValues
         }
 
+        if (Get-SMSCard -CardNumber $CardNumber -CustomerCodeNumber $CustomerCode -SMSConnection $SMSConnection) {
+            throw "Card already exists."
+        }
+
         $Item = "Adding new card number $CardNumber for $FirstName $LastName."
         $SMSCommand = (New-SMSCommand -NamedValues $RecordNamedValues -SMSServerConnection $SMSConnection)
         $SMSCommands = $SMSCommands + $SMSCommand
