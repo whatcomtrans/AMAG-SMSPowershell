@@ -989,4 +989,4 @@ function Switch-SMSCardNumber {
 	}
 }
 
-Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSAccessRights, Switch-SMSCardNumber, Copy-SMSCard
+Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSAccessRights #, Switch-SMSCardNumber, Copy-SMSCard These last two functions are not ready yet, copy does not work properly
