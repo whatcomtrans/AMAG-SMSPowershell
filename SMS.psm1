@@ -968,25 +968,23 @@ function Copy-SMSCard {
 function Switch-SMSCardNumber {
 	[CmdletBinding(SupportsShouldProcess=$true)]
 	Param(
-		[Parameter(Mandatory=$true,ValueFromPipeline=$true,HelpMessage="Old card number to find")]
-		[int]$OldCardNumber,
-        [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,HelpMessage="New card number")]
+		[Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Old card number to find")]
 		[int]$CardNumber,
-        [Parameter(Mandatory=$false,HelpMessage="Old Customer/Facility Code to match card number against.  If not provided, uses CustomerCode")]
-        [int]$OldCustomerCode,
-        [Parameter(Mandatory=$true,HelpMessage="New Customer/Facility Code to set.  If unchanged, specify this parameter and OldCustomerCode is not required.")]
-        [int]$CustomerCode,
+        [Parameter(Mandatory=$true,HelpMessage="New card number")]
+		[int]$NewCardNumber,
+        [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Old Customer/Facility Code to match card number against.")]
+        [int]$CustomerCodeNumber,
+        [Parameter(Mandatory=$false,HelpMessage="New Customer/Facility Code to set.  If not provided, defaults to current CustomerCodeNumber.")]
+        [int]$NewCustomerCodeNumber,
         [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
         [object]$SMSConnection=$DefaultSMSServerConnection
 	)
 	Process {
-        if (!$OldCustomerCode) {
-            $OldCustomerCode = $CustomerCode
+        if (!$NewCustomerCodeNumber) {
+            $NewCustomerCodeNumber = $CustomerCodeNumber
         }
-        #New card issued under new CardID
-        Copy-SMSCard -CopyCardNumber $OldCardNumber -CopyCustomerCode $OldCustomerCode -CardNumber $CardNumber -CustomerCode $CustomerCode
-        Remove-SMSCard -CardNumber $OldCardNumber -CustomerCode $OldCustomerCode
+        Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database multiMax -Query "Update dbo.CardInfoTable SET CardNumber = $NewCardNumber, CustomerCodeNumber = $NewCustomerCodeNumber WHERE CardNumber = $CardNumber AND CustomerCodeNumber = $CustomerCode"
 	}
 }
 
-Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSAccessRights #, Switch-SMSCardNumber, Copy-SMSCard These last two functions are not ready yet, copy does not work properly
+Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSAccessRights ,Switch-SMSCardNumber #, Copy-SMSCard This last function does not work properly
