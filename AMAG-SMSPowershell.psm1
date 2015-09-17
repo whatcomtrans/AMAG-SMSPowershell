@@ -1110,19 +1110,19 @@ function Replace-SMSCard {
         [Parameter(Mandatory=$true,HelpMessage="New card number")]
 		[int]$NewCardNumber,
         [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Old Customer/Facility Code to match card number against.")]
-        [int]$CustomerCodeNumber,
+        [int]$CustomerCode,
         [Parameter(Mandatory=$false,HelpMessage="New Customer/Facility Code to set.  If not provided, defaults to current CustomerCodeNumber.")]
-        [int]$NewCustomerCodeNumber,
+        [int]$NewCustomerCode,
         [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
         [object]$SMSConnection=$DefaultSMSServerConnection
 	)
 	Process {
-        if (!$NewCustomerCodeNumber) {
-            $NewCustomerCodeNumber = $CustomerCodeNumber
+        if (!$NewCustomerCode) {
+            $NewCustomerCode = $CustomerCode
         }
         #Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database multiMax -Query "Update dbo.CardInfoTable SET CardNumber = $NewCardNumber, CustomerCodeNumber = $NewCustomerCodeNumber WHERE CardNumber = $CardNumber AND CustomerCodeNumber = $CustomerCode"
-        Copy-SMSCard -CopyCardNumber $CardNumber -CardNumber $NewCardNumber -CopyCustomerCode $CustomerCodeNumber -CustomerCode $NewCustomerCodeNumber -SMSConnection $SMSConnection
-        Disable-SMSCard -CardNumber $CardNumber -CustomerCode $CustomerCodeNumber -SMSConnection $SMSConnection
+        Copy-SMSCard -CopyCardNumber $CardNumber -CardNumber $NewCardNumber -CopyCustomerCode $CustomerCode -CustomerCode $NewCustomerCode -SMSConnection $SMSConnection
+        Disable-SMSCard -CardNumber $CardNumber -CustomerCode $CustomerCode -SMSConnection $SMSConnection
 	}
 }
 
