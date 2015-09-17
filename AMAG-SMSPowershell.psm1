@@ -25,15 +25,19 @@ function New-SMSCommand {
         [hashtable] $NamedValues = $this.NamedValues
         [String] $Collumns = ""
         [String] $Values = ""
+        [String[]] $SupportedCollumns = @("RecordCount","LastName","FirstName","CardNumber","CompanyID","CardIssueLevel","EmployeeReference","PIN","PersonalData1","PersonalData2","PersonalData3","PersonalData4","PersonalData5","PersonalData6","PersonalData7","PersonalData8","PersonalData9","PersonalData10","ActiveDate","ExpiryDate","ReaderGroupID","TimeCodeID","RecordRequest","RecordStatus","InactiveComment","Encryption","CustomerCode","FaceFile","SignatureFile","InitLet","BadgeFormatID","PersonalData11","PersonalData12","PersonalData13","PersonalData14","PersonalData15","PersonalData16","PersonalData17","PersonalData18","PersonalData19","PersonalData20","PersonalData21","PersonalData22","PersonalData23","PersonalData24","PersonalData25","PersonalData26","PersonalData27","PersonalData28","PersonalData29","PersonalData30","PersonalData31","PersonalData32","PersonalData33","PersonalData34","PersonalData35","PersonalData36","PersonalData37","PersonalData38","PersonalData39","PersonalData40","PersonalData41","PersonalData42","PersonalData43","PersonalData44","PersonalData45","PersonalData46","PersonalData47","PersonalData48","PersonalData49","PersonalData50","HandTemplateValue1","HandTemplateValue2","HandTemplateValue3","HandTemplateValue4","HandTemplateValue5","HandTemplateValue6","HandTemplateValue7","HandTemplateValue8","HandTemplateValue9","ReaderID","AccessCodeID","ImportNow","BatchReference","DefaultBadge","IDSCode","AreaID","DeactivateAtThreatLevel","CardUsageRemaining","Priority")
 
         #Iterate through values
         if ($NamedValues) {
             forEach ($key in $NamedValues.Keys) {
-                $Collumns += ",$key"
-                switch (($NamedValues.$key).GetTypeCode()) {
-                    "String" {$Values += (" ,'" + $NamedValues.$key + "'")}
-                    "DateTime" {$Values += (" ,'" + ([DateTime] ($NamedValues.$key)).ToString() + "'")}
-                    default {$Values += (" ,'" + $NamedValues.$key + "'")}
+                #Check NamedValues that are not compatible with DataImportTable
+                if ($SupportedCollumns -contains $key) {
+                    $Collumns += ",$key"
+                    switch (($NamedValues.$key).GetTypeCode()) {
+                        "String" {$Values += (" ,'" + $NamedValues.$key + "'")}
+                        "DateTime" {$Values += (" ,'" + ([DateTime] ($NamedValues.$key)).ToString() + "'")}
+                        default {$Values += (" ,'" + $NamedValues.$key + "'")}
+                    }
                 }
             }
         }
@@ -350,8 +354,8 @@ function Add-SMSCard {
         [alias("GivenName")]
 		[String]$FirstName,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="Card holders Middle name")]
-        [alias("Initials")]
-		[String]$MiddleName,
+        [alias("Initials", "MiddleName")]
+		[String]$InitLet,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="Date card is set to become active, defaults to current date.")]
         [DateTime]$ActiveDate,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="Date card is set to become in-active")]
@@ -392,6 +396,8 @@ function Add-SMSCard {
         $SMSCommands = $SMSCommands + $SMSCommand
         If ($PSCmdlet.ShouldProcess("$Item","Modify Card")) {
             $SMSCommand.Execute()
+        } else {
+            Echo $SMSCommand
         }
         
         if ($ReturnSMSCommand) {
@@ -707,6 +713,8 @@ function Get-SMSCard {
         [Parameter(Mandatory=$false,Position=4,ValueFromPipelineByPropertyName=$true,HelpMessage="Specify CustomerCode")]
         [Alias("CustomerCode")]
         [String]$CustomerCodeNumber,
+        [Parameter(Mandatory=$false,HelpMessage="Returns inactive cards too, default is to only return active cards.")]
+        [Switch]$IncludeInactive,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$false,HelpMessage="Return all fields")]
         [switch]$Extended,
         [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
@@ -761,6 +769,15 @@ function Get-SMSCard {
             $FirstName = $FirstName.Replace("*","%")
             $WHERE = $WHERE + "FirstName Like '$FirstName'"
         }
+
+        if ($IncludeInactive) {
+            #Do not filter it
+        }else {
+            if ($WHERE) {
+                $WHERE = $WHERE + " AND "
+            }
+            $WHERE = $WHERE + "Inactive = 0"
+        }
         
         if ($WHERE) {
             $SQLCommand = $SQLCommand + " WHERE " + $WHERE
@@ -804,9 +821,9 @@ function Get-SMSAlarms {
 
         [String] $SQLCommand = ""
         if ($Extended) {
-            $SQLCommand = "Select TOP $Top * from ViewAlarmEventTransaction"
+            $SQLCommand = "Select TOP $Top * from ViewAlarmEventTransaction "
         } else {
-            $SQLCommand = "Select TOP $Top TxnID, DateTimeofTxn, CompanyID, CompanyName, WhereName, TxnConditionName, AlarmPriority, AlarmColour, AlarmInstructionText, FirstName, LastName, CustomerCodeNumber, CardNumber from ViewAlarmEventTransaction"
+            $SQLCommand = "Select TOP $Top TxnID, DateTimeofTxn, CompanyID, CompanyName, WhereName, TxnConditionName, AlarmPriority, AlarmColour, AlarmInstructionText, FirstName, LastName, CustomerCodeNumber, CardNumber from ViewAlarmEventTransaction "
         }
 
         [String]$WHERE = ""
@@ -855,6 +872,8 @@ function Get-SMSAlarms {
             $SQLCommand = $SQLCommand + " WHERE " + $WHERE
         }
 
+        $SQLCommand = $SQLCommand + " ORDER BY DateTimeOfTxn DESC"
+
         if (!$SMSConnection.SMSImportDatabaseUsername) {
             $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand
         } else {
@@ -863,6 +882,98 @@ function Get-SMSAlarms {
         return $retvalue
 	}
 }
+
+function Get-SMSActivity {
+    #This is a non-standard SMS cmdlet as it directly accesses the database, use at your own risk
+	[CmdletBinding(SupportsShouldProcess=$false)]
+	Param(
+		[Parameter(Mandatory=$false,Position=0,ValueFromPipeline=$true,HelpMessage="Card number")]
+		[int]$CardNumber,
+        [Parameter(Mandatory=$false,Position=1,ValueFromPipelineByPropertyName=$true,HelpMessage="WhereName or Location description")]
+        [alias("Location")]
+		[String]$WhereName,
+        [Parameter(Mandatory=$false,Position=2,ValueFromPipelineByPropertyName=$true,HelpMessage="Condition description of transaction.")]
+        [alias("Condition")]
+		[String]$TxnConditionName,
+        [Parameter(Mandatory=$false,Position=3,ValueFromPipelineByPropertyName=$true,HelpMessage="Card holders Last name")]
+        [alias("Surname")]
+		[String]$LastName,
+        [Parameter(Mandatory=$false,Position=4,ValueFromPipelineByPropertyName=$true,HelpMessage="Card holders First name")]
+        [alias("GivenName")]
+		[String]$FirstName,
+        [Parameter(Mandatory=$false,Position=5,ValueFromPipelineByPropertyName=$false,HelpMessage="Return all fields")]
+        [switch] $Extended,
+        [Parameter(Mandatory=$false,Position=6,ValueFromPipelineByPropertyName=$false,HelpMessage="Return top number of transactions, defaults to 500")]
+        [int] $Top = 500,
+        [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
+        [object]$SMSConnection=$DefaultSMSServerConnection
+	)
+	Process {
+
+        [String] $SQLCommand = ""
+        if ($Extended) {
+            $SQLCommand = "Select TOP $Top * from ActivityDataView "
+        } else {
+            $SQLCommand = "Select TOP $Top TxnID, DateTimeofTxn, CompanyID, CompanyName, WhereName, TxnConditionName, AlarmPriority, AlarmColour, AlarmInstructionText, FirstName, LastName, CustomerCodeNumber, CardNumber from ActivityDataView "
+        }
+
+        [String]$WHERE = ""
+
+        #Build WHERE cluases
+        If ($CardNumber) {
+            if ($WHERE) {
+                $WHERE = $WHERE + " AND "
+            }
+            $WHERE = $WHERE + "CardNumber = $CardNumber"
+        }
+
+        If ($WhereName) {
+            if ($WHERE) {
+                $WHERE = $WHERE + " AND "
+            }
+            $WhereName = $WhereName.Replace("*","%")
+            $WHERE = $WHERE + "WhereName Like '$WhereName'"
+        }
+
+        If ($TxnConditionName) {
+            if ($WHERE) {
+                $WHERE = $WHERE + " AND "
+            }
+            $TxnConditionName = $TxnConditionName.Replace("*","%")
+            $WHERE = $WHERE + "TxnConditionName Like '$TxnConditionName'"
+        }
+        
+        If ($LastName) {
+            if ($WHERE) {
+                $WHERE = $WHERE + " AND "
+            }
+            $LastName = $LastName.Replace("*","%")
+            $WHERE = $WHERE + "LastName Like '$LastName'"
+        }
+        
+        If ($FirstName) {
+            if ($WHERE) {
+                $WHERE = $WHERE + " AND "
+            }
+            $FirstName = $FirstName.Replace("*","%")
+            $WHERE = $WHERE + "FirstName Like '$FirstName'"
+        }
+        
+        if ($WHERE) {
+            $SQLCommand = $SQLCommand + " WHERE " + $WHERE
+        }
+        
+        $SQLCommand = $SQLCommand + " ORDER BY DateTimeOfTxn DESC"
+
+        if (!$SMSConnection.SMSImportDatabaseUsername) {
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand
+        } else {
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+        }
+        return $retvalue
+	}
+}
+
 
 function Get-SMSCardLocation {
     #This is a non-standard SMS cmdlet as it directly accesses the database, use at your own risk
@@ -888,9 +999,9 @@ function Get-SMSCardLocation {
 
         [String] $SQLCommand = ""
         if ($Extended) {
-            $SQLCommand = "Select * from LocatorByCardInfoView"
+            $SQLCommand = "Select * from LocatorByCardInfoView "
         } else {
-            $SQLCommand = "Select CompanyID, FirstName, LastName, InitLet, CardNumber, CustomerCodeNumber, LastTxn, LastTxnDateTime from LocatorByCardInfoView"
+            $SQLCommand = "Select CompanyID, FirstName, LastName, InitLet, CardNumber, CustomerCodeNumber, LastTxn, LastTxnDateTime from LocatorByCardInfoView "
         }
 
         [String]$WHERE = ""
@@ -928,8 +1039,10 @@ function Get-SMSCardLocation {
         }
         
         if ($WHERE) {
-            $SQLCommand = $SQLCommand + " WHERE " + $WHERE
+            $SQLCommand = $SQLCommand + " WHERE " + $WHERE 
         }
+
+        $SQLCommand = $SQLCommand + " ORDER BY LastTxnDateTime DESC"
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
             $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand
@@ -940,6 +1053,7 @@ function Get-SMSCardLocation {
 	}
 }
 
+#Note, this is significantly limited in what it can copy as it uses Add-SMSCard
 function Copy-SMSCard {
 	[CmdletBinding(SupportsShouldProcess=$true)]
 	Param(
@@ -959,13 +1073,36 @@ function Copy-SMSCard {
             $CopyCustomerCode = $CustomerCode
         }
         #New card issued under new CardID
-        $CopyCard = Get-SMSCard -CardNumber $CopyCardNumber -CustomerCode $CopyCustomerCode -Extended
-        $CopyCard | Add-SMSCard -CardNumber $CardNumber -CustomerCode $CustomerCode
+        $CopyCard = Get-SMSCard -CardNumber $CopyCardNumber -CustomerCode $CopyCustomerCode -Extended -SMSConnection $SMSConnection
+        
+        #Get all OtherNamedValues
+        $OtherNamedValues = @{}
+        forEach ($property in (Get-Member -InputObject $CopyCard | Where -Property "MemberType" -EQ -Value "Property").Name) {
+            switch ($property) {
+                "CompanyID" {$OtherNamedValues.Add($property.Replace(" ", ""), $CopyCard.Item($property))}
+                #"CardIssueLevel" {$OtherNamedValues.Add($property.Replace(" ", ""), $CopyCard.Item($property))}  #Only if turned on in system, TODO, add check
+                "PIN" {$OtherNamedValues.Add($property.Replace(" ", ""), $CopyCard.Item($property))}
+                "DeactivateAtThreatLevel" {$OtherNamedValues.Add($property.Replace(" ", ""), $CopyCard.Item($property))}
+                default {
+                    #Handle PersonalData, ignore all the rest
+                    if ($property.Replace(" ", "") -like "PersonalData*") {
+                        $OtherNamedValues.Add($property.Replace(" ", ""), $CopyCard.Item($property))
+                    }
+                }
+            }
+        }
+        
+        #Add the new card
+        $result = Add-SMSCard -CardNumber $CardNumber -CustomerCode $CustomerCode -EmployeeReference $CopyCard.EmployeeNumber -LastName $CopyCard.LastName -FirstName $CopyCard.FirstName -InitLet $CopyCard.InitLet -ActiveDate $CopyCard.ActiveDateTime -InactiveDate $CopyCard.InactiveDateTime -OtherNamedValues $OtherNamedValues -ReturnSMSCommand
+        
+        #Match access rights
         Get-SMSAccessRights -CardID $CopyCard.CardID | Get-SMSAccessCode | Add-SMSAccessRights -CardNumber $CardNumber -CustomerCode $CustomerCode
+
+        #Note, currently has no ability to do other types of access rights
 	}
 }
 
-function Switch-SMSCardNumber {
+function Replace-SMSCard {
 	[CmdletBinding(SupportsShouldProcess=$true)]
 	Param(
 		[Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Old card number to find")]
@@ -983,8 +1120,10 @@ function Switch-SMSCardNumber {
         if (!$NewCustomerCodeNumber) {
             $NewCustomerCodeNumber = $CustomerCodeNumber
         }
-        Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database multiMax -Query "Update dbo.CardInfoTable SET CardNumber = $NewCardNumber, CustomerCodeNumber = $NewCustomerCodeNumber WHERE CardNumber = $CardNumber AND CustomerCodeNumber = $CustomerCode"
+        #Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database multiMax -Query "Update dbo.CardInfoTable SET CardNumber = $NewCardNumber, CustomerCodeNumber = $NewCustomerCodeNumber WHERE CardNumber = $CardNumber AND CustomerCodeNumber = $CustomerCode"
+        Copy-SMSCard -CopyCardNumber $CardNumber -CardNumber $NewCardNumber -CopyCustomerCode $CustomerCodeNumber -CustomerCode $NewCustomerCodeNumber -SMSConnection $SMSConnection
+        Disable-SMSCard -CardNumber $CardNumber -CustomerCode $CustomerCodeNumber -SMSConnection $SMSConnection
 	}
 }
 
-Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSAccessRights ,Switch-SMSCardNumber #, Copy-SMSCard This last function does not work properly
+Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSActivity, Get-SMSAccessRights, Copy-SMSCard, Replace-SMSCard
