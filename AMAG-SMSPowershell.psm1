@@ -1126,4 +1126,22 @@ function Replace-SMSCard {
 	}
 }
 
-Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSActivity, Get-SMSAccessRights, Copy-SMSCard, Replace-SMSCard
+function Get-SMSRecordsToProcess {
+	[CmdletBinding(SupportsShouldProcess=$false)]
+	Param(
+        [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
+        [object]$SMSConnection=$DefaultSMSServerConnection
+	)
+	Process {
+        [String] $SQLCommand = "SELECT Count([RecordStatus]) AS RecordsToProcess FROM [multiMAXImport].[dbo].[DataImportTable] WHERE [RecordStatus] = 0"
+
+        if (!$SMSConnection.SMSImportDatabaseUsername) {
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand
+        } else {
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+        }
+        return $retvalue.RecordsToProcess
+	}
+}
+
+Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSActivity, Get-SMSAccessRights, Copy-SMSCard, Replace-SMSCard, Get-SMSRecordsToProcess
