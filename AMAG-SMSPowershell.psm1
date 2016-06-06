@@ -1144,4 +1144,114 @@ function Get-SMSRecordsToProcess {
 	}
 }
 
-Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSActivity, Get-SMSAccessRights, Copy-SMSCard, Replace-SMSCard, Get-SMSRecordsToProcess
+function Get-SMSGroupDoorPermission {
+	[CmdletBinding(SupportsShouldProcess=$false,DefaultParameterSetName="OU")]
+	Param(
+		[Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,HelpMessage="Identity of Group, same as Get-ADPrincipalGroupMembership")]
+		[Object]$Identity,
+        [Parameter(Mandatory=$false,Position=1,ValueFromPipeline=$false,ParameterSetName="OU",HelpMessage="Active Directory OU to limit search of permission group to")]
+        [String]$OU,
+        [Parameter(Mandatory=$false,Position=1,ValueFromPipeline=$false,ParameterSetName="Prefix",HelpMessage="Prefix of AD group name to remove when looking up Access codes")]
+        [String]$ADGroupPrefix
+	)
+	Process {
+        if ($OU) {
+            return Get-GroupMembershipRecursive -Identity $Identity | Where-Object -Property distinguishedName -Like -Value "*$OU"
+        } else {
+            return Get-GroupMembershipRecursive -Identity $Identity | Where-Object -Property name -Like -Value "$ADGroupPrefix*"
+        }
+	}
+}
+
+
+function Get-SMSGroupDoorAccessCode {
+	[CmdletBinding(SupportsShouldProcess=$false,DefaultParameterSetName="OU")]
+	Param(
+		[Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,HelpMessage="Identity of Group, same as Get-ADPrincipalGroupMembership")]
+		[Object]$Identity,
+        [Parameter(Mandatory=$false,ParameterSetName="OU",HelpMessage="Active Directory OU to limit search of permission group to")]
+        [String]$OU,
+        [Parameter(Mandatory=$false,HelpMessage="Prefix of AD group name to remove when looking up Access codes")]
+        [String]$ADGroupPrefix,
+        [Parameter(Mandatory=$false,HelpMessage="Prefix of AccessCode names to add to AD group name when looking up Access codes")]
+        [String]$SMSAccessCodePrefix = "",
+        [Parameter(Mandatory=$false,HelpMessage="Limit results to specific CompanyID")]
+        [int]$CompanyID,
+        [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
+        [object]$SMSConnection=$DefaultSMSServerConnection
+	)
+	Process {
+        if ($OU) {
+            $Groups = Get-GroupDoorPermission -Identity $Identity -OU $OU
+        } else {
+            $Groups = Get-GroupDoorPermission -Identity $Identity -ADGroupPrefix $ADGroupPrefix
+        }
+        $AccessCodes = @()
+        forEach ($Group in $Groups) {
+            if ($ADGroupPrefix) {
+                $AccessCodeName = $SMSAccessCodePrefix + $Group.name.replace($ADGroupPrefix, "")
+            } else {
+                $AccessCodeName = $SMSAccessCodePrefix + $Group.name
+            }
+            if ($CompanyID) {
+                $AccessCodes += Get-SMSAccessCode -AccessCodeName $AccessCodeName -CompanyID $CompanyID -SMSConnection $SMSConnection
+            } else {
+                $AccessCodes += Get-SMSAccessCode -AccessCodeName $AccessCodeName -SMSConnection $SMSConnection
+            }
+        }
+        return $AccessCodes
+	}
+}
+
+function Sync-SMSwithAD {
+	[CmdletBinding(SupportsShouldProcess=$false,DefaultParameterSetName="ADUser")]
+	Param(
+		[Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ADUser",HelpMessage="Specific ADUser to sync")]
+		[Microsoft.ActiveDirectory.Management.ADUser]$ADUser,
+        [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ADGroup",HelpMessage="Specific ADGroup to sync.  All users of the group are processed if they have and EmployeeID")]
+		[Microsoft.ActiveDirectory.Management.ADUser]$ADGroup,
+        [Parameter(Mandatory=$false,HelpMessage="Prefix of AD group name to remove when looking up Access codes")]
+        [String]$ADGroupPrefix,
+        [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
+        [object]$SMSConnection=$DefaultSMSServerConnection
+	)
+	Process {
+        If ($ADGroup) {
+            $ADUser = $ADGroup | Get-ADGroupMember -Recursive
+        }
+
+        forEach ($SpecificUser in $ADUser) {
+            
+            $User = $SpecificUser | Get-ADUser -Properties EmployeeID
+            if ($User.EmployeeID) {
+
+                #Get what it should be
+                $adcodes = Get-GroupMembershipRecursive $User | where name -Like "$ADGroupPrefix*" | select Name | %{Get-SMSAccessCode -AccessCodeName ($_.Name.Replace("$ADGroupPrefix", ""))}
+
+                #Get what it is
+                $card = Get-SMSCard -EmployeeReference ($User.EmployeeID) -SMSConnection $SMSConnection
+                $smscardcodes = Get-SMSAccessRights -CardID ($card.CardID) -Extended -SMSConnection $SMSConnection
+                $smscodes = $smscardcodes.AccessGroupName | %{Get-SMSAccessCode -AccessCodeName $_}
+
+                #compare
+                $results = Compare-Object -ReferenceObject $smscodes -DifferenceObject $adcodes -Property AccessCodeID
+                $toAdd = $results | Where "SideIndicator" -EQ "=>"
+                $toRemove = $results | Where "SideIndicator" -EQ "<="
+
+                forEach ($result in $toAdd) {
+                    Add-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID)
+                }
+
+                forEach ($result in $toRemove) {
+                    Remove-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID)
+                }
+            } else {
+                Write-Warning "Skipping $($SpecificUser.SamAccountName) as it is missing an EmployeeID"
+            }
+        }
+	}
+}
+
+Export-ModuleMember -Function *
+
+#Export-ModuleMember Get-SMSServerConnection, Disable-SMSCard, Enable-SMSCard, Set-SMSCard, Add-SMSCard, Remove-SMSCard, Add-SMSAccessRights, Remove-SMSAccessRights, Get-SMSAccessCode, Get-SMSCard, Get-SMSAlarms, Get-SMSCardLocation, Get-SMSActivity, Get-SMSAccessRights, Copy-SMSCard, Replace-SMSCard, Get-SMSRecordsToProcess
