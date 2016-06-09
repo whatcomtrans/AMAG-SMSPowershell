@@ -1182,9 +1182,9 @@ function Get-SMSGroupDoorAccessCode {
 	)
 	Process {
         if ($OU) {
-            $Groups = Get-GroupDoorPermission -Identity $Identity -OU $OU
+            $Groups = Get-SMSGroupDoorPermission -Identity $Identity -OU $OU
         } else {
-            $Groups = Get-GroupDoorPermission -Identity $Identity -ADGroupPrefix $ADGroupPrefix
+            $Groups = Get-SMSGroupDoorPermission -Identity $Identity -ADGroupPrefix $ADGroupPrefix
         }
         $AccessCodes = @()
         forEach ($Group in $Groups) {
