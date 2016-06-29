@@ -1212,6 +1212,8 @@ function Sync-SMSwithAD {
 		[Microsoft.ActiveDirectory.Management.ADUser]$ADGroup,
         [Parameter(Mandatory=$false,HelpMessage="Prefix of AD group name to remove when looking up Access codes")]
         [String]$ADGroupPrefix,
+        [Parameter(Mandatory=$true,HelpMessage="Customer/Facility Code to use.")]
+        [int]$CustomerCode,
         [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
         [object]$SMSConnection=$DefaultSMSServerConnection
 	)
@@ -1239,7 +1241,7 @@ function Sync-SMSwithAD {
                 $toRemove = $results | Where "SideIndicator" -EQ "<="
 
                 forEach ($result in $toAdd) {
-                    Add-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID)
+                    Add-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode
                 }
 
                 forEach ($result in $toRemove) {
