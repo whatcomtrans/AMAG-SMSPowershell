@@ -507,10 +507,10 @@ function Add-SMSAccessRights {
             $RecordNamedValues = $RecordNamedValues + $OtherNamedValues
         }
 
-        $Item = "Adding AccessCode $AccessCodeID."
+        $Item = "$CardNumber$EmployeeReference$FirstName $LastName"
         $SMSCommand = (New-SMSCommand -NamedValues $RecordNamedValues -SMSServerConnection $SMSConnection)
         $SMSCommands = $SMSCommands + $SMSCommand
-        If ($PSCmdlet.ShouldProcess("$Item","Add Access Code")) {
+        If ($PSCmdlet.ShouldProcess("$Item","Add Access Code $AccessCodeID")) {
             $SMSCommand.Execute()
         }
         
@@ -569,10 +569,10 @@ function Remove-SMSAccessRights {
             $RecordNamedValues = $RecordNamedValues + $OtherNamedValues
         }
 
-        $Item = "Adding AccessCode $AccessCodeID."
+        $Item = "$CardNumber$EmployeeReference$FirstName $LastName"
         $SMSCommand = (New-SMSCommand -NamedValues $RecordNamedValues -SMSServerConnection $SMSConnection)
         $SMSCommands = $SMSCommands + $SMSCommand
-        If ($PSCmdlet.ShouldProcess("$Item","Add Access Code")) {
+        If ($PSCmdlet.ShouldProcess("$Item","Remove Access Code $AccessCodeID")) {
             $SMSCommand.Execute()
         }
         
@@ -713,6 +713,8 @@ function Get-SMSCard {
         [Parameter(Mandatory=$false,Position=4,ValueFromPipelineByPropertyName=$true,HelpMessage="Specify CustomerCode")]
         [Alias("CustomerCode")]
         [String]$CustomerCodeNumber,
+        [Parameter(Mandatory=$false)]
+		[int]$CardID,
         [Parameter(Mandatory=$false,HelpMessage="Returns inactive cards too, default is to only return active cards.")]
         [Switch]$IncludeInactive,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$false,HelpMessage="Return all fields")]
@@ -732,6 +734,13 @@ function Get-SMSCard {
         [String]$WHERE = ""
 
         #Build WHERE cluases
+        If ($CardID) {
+            if ($WHERE) {
+                $WHERE = $WHERE + " AND "
+            }
+            $WHERE = $WHERE + "CardID = $CardID"
+        }
+
         If ($CardNumber) {
             if ($WHERE) {
                 $WHERE = $WHERE + " AND "
@@ -1204,12 +1213,14 @@ function Get-SMSGroupDoorAccessCode {
 }
 
 function Sync-SMSwithAD {
-	[CmdletBinding(SupportsShouldProcess=$false,DefaultParameterSetName="ADUser")]
+	[CmdletBinding(SupportsShouldProcess=$true,DefaultParameterSetName="ByADUser")]
 	Param(
-		[Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ADUser",HelpMessage="Specific ADUser to sync")]
-		[Microsoft.ActiveDirectory.Management.ADUser]$ADUser,
-        [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ADGroup",HelpMessage="Specific ADGroup to sync.  All users of the group are processed if they have and EmployeeID")]
-		[Microsoft.ActiveDirectory.Management.ADUser]$ADGroup,
+		[Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ByADUser",HelpMessage="Specific ADUser to sync")]
+		[Microsoft.ActiveDirectory.Management.ADUser[]]$ADUser,
+        [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ByADGroup",HelpMessage="Specific ADGroup to sync.  All users of the group are processed if they have and EmployeeID")]
+		[Microsoft.ActiveDirectory.Management.ADGroup[]]$ADGroup,
+        [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ByDoor",HelpMessage="To sync by door AD security groups, specify an OU to find groups in.")]
+        [String]$OU,
         [Parameter(Mandatory=$false,HelpMessage="Prefix of AD group name to remove when looking up Access codes")]
         [String]$ADGroupPrefix,
         [Parameter(Mandatory=$true,HelpMessage="Customer/Facility Code to use.")]
@@ -1218,37 +1229,67 @@ function Sync-SMSwithAD {
         [object]$SMSConnection=$DefaultSMSServerConnection
 	)
 	Process {
-        If ($ADGroup) {
-            $ADUser = $ADGroup | Get-ADGroupMember -Recursive
-        }
+        If ($OU) {   #By DOOR ADGroup
+            $Doors = Get-ADGroup -SearchBase $OU -Filter "Name -like '$($ADGroupPrefix)*'"
+            forEach ($Door in $Doors) {
+                #for a specific door, determine what users should have access
+                $usersShould = ($Door | Get-ADGroupMember -Recursive | Get-ADUser -Properties EmployeeID | %{Get-SMSCard -EmployeeReference $_.EmployeeID}).CardID
 
-        forEach ($SpecificUser in $ADUser) {
-            
-            $User = $SpecificUser | Get-ADUser -Properties EmployeeID
-            if ($User.EmployeeID) {
 
-                #Get what it should be
-                $adcodes = Get-GroupMembershipRecursive $User | where name -Like "$ADGroupPrefix*" | select Name | %{Get-SMSAccessCode -AccessCodeName ($_.Name.Replace("$ADGroupPrefix", ""))}
+                #for a specifc door, determine who currently has access
+                $usersDo = (Get-SMSAccessRights -AccessGroupName ($Door.Name.Replace($ADGroupPrefix, ""))).CardID
 
-                #Get what it is
-                $card = Get-SMSCard -EmployeeReference ($User.EmployeeID) -SMSConnection $SMSConnection
-                $smscardcodes = Get-SMSAccessRights -CardID ($card.CardID) -Extended -SMSConnection $SMSConnection
-                $smscodes = $smscardcodes.AccessGroupName | %{Get-SMSAccessCode -AccessCodeName $_}
+                #TODO Need to handle operators who are not IN AD yet
+                $results = Compare-Object -ReferenceObject $usersDo -DifferenceObject $usersShould
 
-                #compare
-                $results = Compare-Object -ReferenceObject $smscodes -DifferenceObject $adcodes -Property AccessCodeID
-                $toAdd = $results | Where "SideIndicator" -EQ "=>"
-                $toRemove = $results | Where "SideIndicator" -EQ "<="
+                $toRemove = ($results | Where "SideIndicator" -EQ "=>").InputObject
+                $toAdd = ($results | Where "SideIndicator" -EQ "<=").InputObject
 
+                $accessCodeID = (Get-SMSAccessCode -AccessCodeName ($Door.Name.Replace($ADGroupPrefix, ""))).AccessCodeID
                 forEach ($result in $toAdd) {
-                    Add-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode
+                    #Write-Verbose "Adding AccessCodeID $accessCodeID to card $result"
+                    Add-SMSAccessRights -CardNumber ((Get-SMSCard -CardID $result).CardNumber) -AccessCodeID $accessCodeID -CustomerCode $CustomerCode -SMSConnection $SMSConnection
                 }
 
                 forEach ($result in $toRemove) {
-                    Remove-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID)
+                    #Write-Verbose "Removing AccessCodeID $accessCodeID from card $result"
+                    Remove-SMSAccessRights -CardNumber ((Get-SMSCard -CardID $result).CardNumber) -AccessCodeID $accessCodeID -CustomerCode $CustomerCode -SMSConnection $SMSConnection
                 }
-            } else {
-                Write-Warning "Skipping $($SpecificUser.SamAccountName) as it is missing an EmployeeID"
+            }
+        } else {     #By ADGroup or ADUser
+
+            If ($ADGroup) {
+                $ADUser = $ADGroup | Get-ADGroupMember -Recursive
+            }
+
+            forEach ($SpecificUser in $ADUser) {
+            
+                $User = $SpecificUser | Get-ADUser -Properties EmployeeID
+                if ($User.EmployeeID) {
+
+                    #Get what it should be
+                    $adcodes = Get-GroupMembershipRecursive $User | where name -Like "$ADGroupPrefix*" | select Name | %{Get-SMSAccessCode -AccessCodeName ($_.Name.Replace("$ADGroupPrefix", "")) -SMSConnection $SMSConnection}
+
+                    #Get what it is
+                    $card = Get-SMSCard -EmployeeReference ($User.EmployeeID) -SMSConnection $SMSConnection
+                    $smscardcodes = Get-SMSAccessRights -CardID ($card.CardID) -Extended -SMSConnection $SMSConnection
+                    $smscodes = $smscardcodes.AccessGroupName | %{Get-SMSAccessCode -AccessCodeName $_ -SMSConnection $SMSConnection}
+
+                    #compare
+                    $results = Compare-Object -ReferenceObject $smscodes -DifferenceObject $adcodes -Property AccessCodeID
+                    $toAdd = $results | Where "SideIndicator" -EQ "=>"
+                    $toRemove = $results | Where "SideIndicator" -EQ "<="
+
+                    forEach ($result in $toAdd) {
+                        Add-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode -SMSConnection $SMSConnection
+                    }
+
+                    forEach ($result in $toRemove) {
+                        Remove-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode -SMSConnection $SMSConnection
+                    }
+                } else {
+                    Write-Warning "Skipping $($SpecificUser.SamAccountName) as it is missing an EmployeeID"
+                }
             }
         }
 	}
