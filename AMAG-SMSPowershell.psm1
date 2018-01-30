@@ -1273,7 +1273,11 @@ function Sync-SMSwithAD {
                     #Get what it is
                     $card = Get-SMSCard -EmployeeReference ($User.EmployeeID) -SMSConnection $SMSConnection
                     $smscardcodes = Get-SMSAccessRights -CardID ($card.CardID) -Extended -SMSConnection $SMSConnection
-                    $smscodes = $smscardcodes.AccessGroupName | %{Get-SMSAccessCode -AccessCodeName $_ -SMSConnection $SMSConnection}
+                    if (!$smscardcodes) {
+                        $smscardcodes = @()
+                    } else {
+                        $smscodes = $smscardcodes.AccessGroupName | %{Get-SMSAccessCode -AccessCodeName $_ -SMSConnection $SMSConnection}
+                    }
 
                     #compare
                     $results = Compare-Object -ReferenceObject $smscodes -DifferenceObject $adcodes -Property AccessCodeID
