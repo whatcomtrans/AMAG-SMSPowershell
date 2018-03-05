@@ -1274,7 +1274,7 @@ function Sync-SMSwithAD {
                     $card = Get-SMSCard -EmployeeReference ($User.EmployeeID) -SMSConnection $SMSConnection
                     $smscardcodes = Get-SMSAccessRights -CardID ($card.CardID) -Extended -SMSConnection $SMSConnection
                     if (!$smscardcodes) {
-                        $smscardcodes = @()
+                        $smscodes = @()
                     } else {
                         $smscodes = $smscardcodes.AccessGroupName | %{Get-SMSAccessCode -AccessCodeName $_ -SMSConnection $SMSConnection}
                     }
