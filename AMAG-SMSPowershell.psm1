@@ -359,8 +359,8 @@ function Add-SMSCard {
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="Date card is set to become active, defaults to current date.")]
         [DateTime]$ActiveDate,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="Date card is set to become in-active")]
-        [alias("accountExpires")]
-        [DateTime]$InactiveDate,
+        [alias("accountExpires", "InactiveDate")]
+        [DateTime]$ExpiryDate,
         [Parameter(Mandatory=$true,HelpMessage="Customer/Facility Code")]
         [int]$CustomerCode,
         [Parameter(Mandatory=$false,HelpMessage="Other attributes to set on the card as a hashtable of name value pairs using the database field names and data types of the DataImportTable.")]
