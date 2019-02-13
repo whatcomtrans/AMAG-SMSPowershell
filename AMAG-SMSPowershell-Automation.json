@@ -1,0 +1,36 @@
+{ 
+    "ConnectionFields": [
+        {
+            "IsEncrypted":  false,
+            "IsOptional":  false,
+            "Name":  "SMSDatabaseServer",
+            "TypeName":  "System.String"
+        },
+        {
+            "IsEncrypted":  false,
+            "IsOptional":  false,
+            "Name":  "SMSImportDatabase",
+            "TypeName":  "System.String"
+        },
+        {
+            "IsEncrypted":  false,
+            "IsOptional":  true,
+            "Name":  "SMSImportDatabaseUsername",
+            "TypeName":  "System.String"
+        },
+        {
+            "IsEncrypted":  false,
+            "IsOptional":  true,
+            "Name":  "SMSImportDatabasePassword",
+            "TypeName":  "System.String"
+        },
+        {
+            "IsEncrypted":  false,
+            "IsOptional":  true,
+            "Name":  "SMSImportIntervalMinutes",
+            "TypeName":  "System.String"
+        }
+    ],
+    "ConnectionTypeName":  "SMSServerConnection",
+    "IntegrationModuleName":  "AMAG-SMSPowershell"
+ }

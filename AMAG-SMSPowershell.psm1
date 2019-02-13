@@ -53,9 +53,9 @@ function New-SMSCommand {
         $SMSConnection = $this.SMSServerConnection
         $SQLCommand = $this.SQLCommand
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         $this.RecordCount = $retvalue.RecordCount
     }
@@ -64,9 +64,9 @@ function New-SMSCommand {
         $SMSConnection = $this.SMSServerConnection
         $SQLCommand = "SELECT RecordStatus FROM DataImportTable WHERE RecordCount = " + $this.RecordCount
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         return $retvalue.RecordStatus
     }
@@ -75,9 +75,9 @@ function New-SMSCommand {
         $SMSConnection = $this.SMSServerConnection
         $SQLCommand = "SELECT Message FROM MessageTable WHERE RecordStatus = " + $this.RecordStatus
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         return $retvalue.Message
     }
@@ -201,7 +201,7 @@ function Disable-SMSCard {
 	}
 	End {
         if ($Wait) {
-            Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
+            Start-Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
         }
 	}
 }
@@ -406,7 +406,7 @@ function Add-SMSCard {
 	}
 	End {
         if ($Wait) {
-            Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
+            Start-Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
         }
 	}
 }
@@ -462,7 +462,7 @@ function Remove-SMSCard {
 	}
 	End {
         if ($Wait) {
-            Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
+            Start-Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
         }
 	}
 }
@@ -520,7 +520,7 @@ function Add-SMSAccessRights {
 	}
 	End {
         if ($Wait) {
-            Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
+            Start-Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
         }
 	}
 }
@@ -582,7 +582,7 @@ function Remove-SMSAccessRights {
 	}
 	End {
         if ($Wait) {
-            Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
+            Start-Sleep (($SMSConnection.SMSImportIntervalMinutes * 60) + 1)
         }
 	}
 }
@@ -628,9 +628,9 @@ function Get-SMSAccessCode {
         }
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         return $retvalue
 	}
@@ -641,6 +641,8 @@ function Get-SMSAccessRights {
 	Param(
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="CardID to find.")]
         [int]$CardID,
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="CardNumber to find.")]
+        [int]$CardNumber,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="Find access code(s) by name, SQL wildcards allowed.")]
         [alias("AccessCodeName")]
         [string]$AccessGroupName,
@@ -654,7 +656,7 @@ function Get-SMSAccessRights {
 	Process {
         [String] $SQLCommand = ""
         if ($Extended) {
-            $SQLCommand = "Select * from ViewAccessRights"
+            $SQLCommand = "SELECT dbo.ViewAccessRights.*, dbo.ViewSMSCardHolders.FirstName, dbo.ViewSMSCardHolders.LastName, dbo.ViewSMSCardHolders.InitLet, dbo.ViewSMSCardHolders.EmployeeNumber, dbo.ViewSMSCardHolders.CompanyID, dbo.ViewSMSCardHolders.CardNumber, dbo.ViewSMSCardHolders.CustomerCodeNumber FROM dbo.ViewAccessRights LEFT OUTER JOIN dbo.ViewSMSCardHolders ON dbo.ViewAccessRights.CardID = dbo.ViewSMSCardHolders.CardID"
         } else {
             $SQLCommand = "Select CardID, AccessGroupName from ViewAccessRights"
         }
@@ -666,6 +668,13 @@ function Get-SMSAccessRights {
                 $WHERE = $WHERE + " AND "
             }
             $WHERE = $WHERE + "CardID = $CardID"
+        }
+
+        If ($CardNumber) {
+            if ($WHERE) {
+                $WHERE = $WHERE + " AND "
+            }
+            $WHERE = $WHERE + "dbo.ViewSMSCardHolders.CardNumber = $CardNumber"
         }
 
         If ($AccessGroupName) {
@@ -687,9 +696,9 @@ function Get-SMSAccessRights {
         }
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         return $retvalue
 	}
@@ -793,9 +802,9 @@ function Get-SMSCard {
         }
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         return $retvalue
 	}
@@ -884,9 +893,9 @@ function Get-SMSAlarms {
         $SQLCommand = $SQLCommand + " ORDER BY DateTimeOfTxn DESC"
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         return $retvalue
 	}
@@ -975,9 +984,9 @@ function Get-SMSActivity {
         $SQLCommand = $SQLCommand + " ORDER BY DateTimeOfTxn DESC"
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         return $retvalue
 	}
@@ -1054,9 +1063,9 @@ function Get-SMSCardLocation {
         $SQLCommand = $SQLCommand + " ORDER BY LastTxnDateTime DESC"
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         return $retvalue
 	}
@@ -1145,9 +1154,9 @@ function Get-SMSRecordsToProcess {
         [String] $SQLCommand = "SELECT Count([RecordStatus]) AS RecordsToProcess FROM [multiMAXImport].[dbo].[DataImportTable] WHERE [RecordStatus] = 0"
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
         }
         return $retvalue.RecordsToProcess
 	}
@@ -1219,41 +1228,111 @@ function Sync-SMSwithAD {
 		[Microsoft.ActiveDirectory.Management.ADUser[]]$ADUser,
         [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ByADGroup",HelpMessage="Specific ADGroup to sync.  All users of the group are processed if they have and EmployeeID")]
 		[Microsoft.ActiveDirectory.Management.ADGroup[]]$ADGroup,
-        [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ByDoor",HelpMessage="To sync by door AD security groups, specify an OU to find groups in.")]
+        [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ByDoorOU",HelpMessage="To sync by door AD security groups, specify an OU to find groups in.")]
         [String]$OU,
+        [Parameter(Mandatory=$true,Position=0,ValueFromPipeline=$true,ParameterSetName="ByDoorGroup",HelpMessage="To sync by door AD security groups, specify an OU to find groups in.")]
+        [Object[]]$DoorGroup,
         [Parameter(Mandatory=$false,HelpMessage="Prefix of AD group name to remove when looking up Access codes")]
         [String]$ADGroupPrefix,
+        [Parameter(Mandatory=$false,HelpMessage="AD user attribute to match CardID against.  If not set, ADAttributeEmployeeReference will be used.")]
+        [String]$ADAttributeCardID,
+        [Parameter(Mandatory=$false,HelpMessage="AD user attribute to match EmployeeReference against.  Defaults to EmployeeID.  Setting ADAttributeCardID will ignore this.")]
+        [String]$ADAttributeEmployeeReference = "EmployeeID",
         [Parameter(Mandatory=$true,HelpMessage="Customer/Facility Code to use.")]
         [int]$CustomerCode,
+        [Parameter(Mandatory=$false,HelpMessage="Switch to return the SMSCommand object generated and executed by this cmdlet.")]
+        [switch]$ReturnSMSCommand,
+        [Parameter(Mandatory=$false,HelpMessage="Switch to return an array of ScriptBlocks of the commands that are needed to run to sync.")]
+        [switch]$ReturnIssues,
         [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
         [object]$SMSConnection=$DefaultSMSServerConnection
-	)
+    )
+    Begin {
+        if (($OU -or $DoorGroup) -and !$ADAttributeCardID) {
+            $allCards = Get-SMSCard -SMSConnection $SMSConnection
+        }
+
+        $returnCommands = @()
+        $issues = @()
+    }
 	Process {
         If ($OU) {   #By DOOR ADGroup
             $Doors = Get-ADGroup -SearchBase $OU -Filter "Name -like '$($ADGroupPrefix)*'"
+        }
+
+        If ($DoorGroup) {
+            if ($DoorGroup[0] -is [String]) {
+                #Treat DoorGroup strings as Identity values
+                $Doors = $DoorGroup | %{Get-ADGroup -Identity $_}
+            } else {
+                #Assuming these are ADGroup objects TODO: should validate this assumption either in the parameter or here
+                $Doors = $DoorGroup
+            }
+        }
+        
+        If ($Doors) {
             forEach ($Door in $Doors) {
                 #for a specific door, determine what users should have access
-                $usersShould = ($Door | Get-ADGroupMember -Recursive | Get-ADUser -Properties EmployeeID | %{Get-SMSCard -EmployeeReference $_.EmployeeID}).CardID
+                $usersShould = @()
+                if ($ADAttributeCardID) {
+                    $usersShould = ($Door | Get-ADGroupMember -Recursive | Get-ADUser -Properties $ADAttributeCardID).$ADAttributeCardID # | %{Get-SMSCard -CardNumber ($_.$ADAttributeCardID)).CardID #  TODO: Is it ok to not check AMAG for existance of record, it sure speeds things up.
+                } elseif ($ADAttributeEmployeeReference) {
+                    $usersShould = ($Door | Get-ADGroupMember -Recursive | Get-ADUser -Properties $ADAttributeEmployeeReference | ForEach-Object {$allCards | Where -Property "EmployeeNumber" -EQ -Value $_.$ADAttributeEmployeeReference}).CardNumber # ForEach-Object {Get-SMSCard -EmployeeReference ($_.$ADAttributeEmployeeReference)}).CardNumber
+                } else {
+                    throw "No ADAttributes to match against specified."
+                }
 
+                $usersShould = $usersShould | Where-Object {$_ -ne $null}
 
                 #for a specifc door, determine who currently has access
-                $usersDo = (Get-SMSAccessRights -AccessGroupName ($Door.Name.Replace($ADGroupPrefix, ""))).CardID
+                $usersDo = (Get-SMSAccessRights -AccessGroupName ($Door.Name.Replace($ADGroupPrefix, "")) -Extended).CardNumber
 
-                #TODO Need to handle operators who are not IN AD yet
-                $results = Compare-Object -ReferenceObject $usersDo -DifferenceObject $usersShould
-
-                $toRemove = ($results | Where "SideIndicator" -EQ "=>").InputObject
-                $toAdd = ($results | Where "SideIndicator" -EQ "<=").InputObject
+                $toRemove = @()
+                $toAdd = @()
+                if ($usersDo -and $usersShould) {
+                    #There are both those that do and those that should have access, compare
+                    $results = Compare-Object -ReferenceObject $usersDo -DifferenceObject $usersShould
+                    $toRemove = ($results | Where-Object "SideIndicator" -EQ "<=").InputObject
+                    $toAdd = ($results | Where-Object "SideIndicator" -EQ "=>").InputObject
+                } elseif ($usersDo) {
+                    #There are only users that do have access and no one who should, remove all that do
+                    $toRemove = $usersDo
+                } elseif ($usersShould) {
+                    #There are only users that should have access, none do currently so add all of them
+                    $toAdd = $usersShould
+                }
 
                 $accessCodeID = (Get-SMSAccessCode -AccessCodeName ($Door.Name.Replace($ADGroupPrefix, ""))).AccessCodeID
+
                 forEach ($result in $toAdd) {
-                    #Write-Verbose "Adding AccessCodeID $accessCodeID to card $result"
-                    Add-SMSAccessRights -CardNumber ((Get-SMSCard -CardID $result).CardNumber) -AccessCodeID $accessCodeID -CustomerCode $CustomerCode -SMSConnection $SMSConnection
+                    if ($ReturnIssues) {
+                        $issues += [scriptblock]::Create("Add-SMSAccessRights -CardNumber $result -AccessCodeID $accessCodeID -CustomerCode $CustomerCode")
+                    } else {
+                        if ($pscmdlet.ShouldProcess("Adding AccessCodeID $accessCodeID to card $result")) {
+                            Write-Verbose "Adding AccessCodeID $accessCodeID to card $result"
+                            if ($ReturnSMSCommand) {
+                                #ReturnSMSCommand returns the completed command, it does not prevent execution.
+                                $returnCommands += Add-SMSAccessRights -CardNumber ((Get-SMSCard -CardID $result).CardNumber) -AccessCodeID $accessCodeID -CustomerCode $CustomerCode -SMSConnection $SMSConnection -ReturnSMSCommand 
+                            } else {
+                                Add-SMSAccessRights -CardNumber ((Get-SMSCard -CardID $result).CardNumber) -AccessCodeID $accessCodeID -CustomerCode $CustomerCode -SMSConnection $SMSConnection
+                            }
+                        }
+                    }
                 }
 
                 forEach ($result in $toRemove) {
-                    #Write-Verbose "Removing AccessCodeID $accessCodeID from card $result"
-                    Remove-SMSAccessRights -CardNumber ((Get-SMSCard -CardID $result).CardNumber) -AccessCodeID $accessCodeID -CustomerCode $CustomerCode -SMSConnection $SMSConnection
+                    if ($ReturnIssues) {
+                        $issues += [scriptblock]::Create("Remove-SMSAccessRights -CardNumber $result -AccessCodeID $accessCodeID -CustomerCode $CustomerCode")
+                    } else {
+                        if ($pscmdlet.ShouldProcess("Removing AccessCodeID $accessCodeID from card $result")) {
+                            Write-Verbose "Removing AccessCodeID $accessCodeID from card $result"
+                            if ($ReturnSMSCommand) {
+                                $returnCommands += Remove-SMSAccessRights -CardNumber ((Get-SMSCard -CardID $result).CardNumber) -AccessCodeID $accessCodeID -CustomerCode $CustomerCode -SMSConnection $SMSConnection -ReturnSMSCommand
+                            } else {
+                                Remove-SMSAccessRights -CardNumber ((Get-SMSCard -CardID $result).CardNumber) -AccessCodeID $accessCodeID -CustomerCode $CustomerCode -SMSConnection $SMSConnection
+                            }
+                        }
+                    }
                 }
             }
         } else {     #By ADGroup or ADUser
@@ -1280,23 +1359,62 @@ function Sync-SMSwithAD {
                     }
 
                     #compare
-                    $results = Compare-Object -ReferenceObject $smscodes -DifferenceObject $adcodes -Property AccessCodeID
-                    $toAdd = $results | Where "SideIndicator" -EQ "=>"
-                    $toRemove = $results | Where "SideIndicator" -EQ "<="
+                    $toRemove = @()
+                    $toAdd = @()
+                    if ($smscodes -and $adcodes) {
+                        $results = Compare-Object -ReferenceObject $smscodes -DifferenceObject $adcodes -Property AccessCodeID
+                        $toAdd = $results | Where "SideIndicator" -EQ "=>"
+                        $toRemove = $results | Where "SideIndicator" -EQ "<="
+                    } elseif ($smscodes) {
+                        $toRemove = $smscodes
+                    } elseif ($adcodes) {
+                        $toAdd = $adcodes
+                    }
 
                     forEach ($result in $toAdd) {
+                        if ($ReturnIssues) {
+                            $issues += [scriptblock]::Create("Add-SMSAccessRights -CardNumber $($card.CardNumber) -AccessCodeID $($result.AccessCodeID) -CustomerCode $CustomerCode")
+                        } else {
+                            if ($pscmdlet.ShouldProcess("Adding AccessCodeID $($card.CardNumber) to card $($result.AccessCodeID)")) {
+                                Write-Verbose "Adding AccessCodeID $($card.CardNumber) to card $($result.AccessCodeID)"
+                                if ($ReturnSMSCommand) {
+                                    #ReturnSMSCommand returns the completed command, it does not prevent execution.
+                                    $returnCommands += Add-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode -SMSConnection $SMSConnection -ReturnSMSCommand
+                                } else {
+                                    Add-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode -SMSConnection $SMSConnection
+                                }
+                            }
+                        }
                         Add-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode -SMSConnection $SMSConnection
                     }
 
                     forEach ($result in $toRemove) {
-                        Remove-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode -SMSConnection $SMSConnection
+                        if ($ReturnIssues) {
+                            $issues += [scriptblock]::Create("Remove-SMSAccessRights -CardNumber $($card.CardNumber) -AccessCodeID $($result.AccessCodeID) -CustomerCode $CustomerCode")
+                        } else {
+                            if ($pscmdlet.ShouldProcess("Removing AccessCodeID $($result.AccessCodeID) from card $($card.CardNumber)")) {
+                                Write-Verbose "Removing AccessCodeID $($result.AccessCodeID) from card $($card.CardNumber)"
+                                if ($ReturnSMSCommand) {
+                                    $returnCommands += Remove-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode -SMSConnection $SMSConnection -ReturnSMSCommand
+                                } else {
+                                    Remove-SMSAccessRights -CardNumber ($card.CardNumber) -AccessCodeID ($result.AccessCodeID) -CustomerCode $CustomerCode -SMSConnection $SMSConnection
+                                }
+                            }
+                        }
                     }
                 } else {
                     Write-Warning "Skipping $($SpecificUser.SamAccountName) as it is missing an EmployeeID"
                 }
             }
         }
-	}
+    }
+    End {
+        if ($ReturnIssues) {
+            return $issues
+        } elseif ($ReturnSMSCommand) {
+            return $returnCommands
+        }
+    }
 }
 
 Export-ModuleMember -Function *
