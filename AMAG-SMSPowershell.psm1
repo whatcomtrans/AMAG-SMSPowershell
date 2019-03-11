@@ -667,7 +667,7 @@ function Get-SMSAccessRights {
             if ($WHERE) {
                 $WHERE = $WHERE + " AND "
             }
-            $WHERE = $WHERE + "CardID = $CardID"
+            $WHERE = $WHERE + "dbo.ViewAccessRights.CardID = $CardID"
         }
 
         If ($CardNumber) {
@@ -681,7 +681,7 @@ function Get-SMSAccessRights {
             if ($WHERE) {
                 $WHERE = $WHERE + " AND "
             }
-            $WHERE = $WHERE + "AccessGroupName Like '$AccessGroupName'"
+            $WHERE = $WHERE + "dbo.ViewAccessRights.AccessGroupName Like '$AccessGroupName'"
         }
 
         If ($IsEnabled) {
