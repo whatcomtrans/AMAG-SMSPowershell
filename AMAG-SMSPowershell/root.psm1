@@ -1249,7 +1249,7 @@ function Sync-SMSwithAD {
     )
     Begin {
         if (($OU -or $DoorGroup) -and !$ADAttributeCardID) {
-            $allCards = Get-SMSCard -SMSConnection $SMSConnection
+            $allCards = Get-SMSCard -SMSConnection $SMSConnection -IncludeInactive
         }
 
         $returnCommands = @()
