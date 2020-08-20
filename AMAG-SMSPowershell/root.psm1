@@ -1277,15 +1277,15 @@ function Sync-SMSwithAD {
                 if ($ADAttributeCardID) {
                     $usersShould = ($Door | Get-ADGroupMember -Recursive | Get-ADUser -Properties $ADAttributeCardID).$ADAttributeCardID # | %{Get-SMSCard -CardNumber ($_.$ADAttributeCardID)).CardID #  TODO: Is it ok to not check AMAG for existance of record, it sure speeds things up.
                 } elseif ($ADAttributeEmployeeReference) {
-                    $usersShould = ($Door | Get-ADGroupMember -Recursive | Get-ADUser -Properties $ADAttributeEmployeeReference | ForEach-Object {$allCards | Where -Property "EmployeeNumber" -EQ -Value $_.$ADAttributeEmployeeReference}).CardNumber # ForEach-Object {Get-SMSCard -EmployeeReference ($_.$ADAttributeEmployeeReference)}).CardNumber
+                    $usersShould = ($Door | Get-ADGroupMember -Recursive | Get-ADUser -Properties $ADAttributeEmployeeReference | ForEach-Object {$allCards | Where-Object -Property "EmployeeNumber" -EQ -Value $_.$ADAttributeEmployeeReference}).CardNumber # ForEach-Object {Get-SMSCard -EmployeeReference ($_.$ADAttributeEmployeeReference)}).CardNumber
                 } else {
                     throw "No ADAttributes to match against specified."
                 }
 
                 $usersShould = $usersShould | Where-Object {$_ -ne $null}
 
-                #for a specifc door, determine who currently has access
-                $usersDo = (Get-SMSAccessRights -AccessGroupName ($Door.Name.Replace($ADGroupPrefix, "")) -Extended).CardNumber
+                #for a specifc door, determine who currently has access.  Note, the Where on EmployeeNumber only gets those that have a value and ignores those without an employee number.  This allows non-employees to be included in the access group
+                $usersDo = (Get-SMSAccessRights -AccessGroupName ($Door.Name.Replace($ADGroupPrefix, "")) -Extended | Where-Object -FilterScript {$_.EmployeeNumber.GetTypeCode() -eq 'String'}).CardNumber
 
                 $toRemove = @()
                 $toAdd = @()
