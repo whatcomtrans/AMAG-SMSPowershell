@@ -648,19 +648,12 @@ function Get-SMSAccessRights {
         [string]$AccessGroupName,
         [Parameter(Mandatory=$false,HelpMessage="Show only those enabled, defaults to True")]
         [switch]$IsEnabled = $true,
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$false,HelpMessage="Return all fields")]
-        [switch] $Extended,
         [Parameter(Mandatory=$false,HelpMessage="SMSConnection object, use Get-SMSServerConnection to create the object.")]
         [object]$SMSConnection=$DefaultSMSServerConnection
 	)
 	Process {
-        [String] $SQLCommand = ""
-        if ($Extended) {
-            $SQLCommand = "SELECT dbo.ViewAccessRights.*, dbo.ViewSMSCardHolders.FirstName, dbo.ViewSMSCardHolders.LastName, dbo.ViewSMSCardHolders.InitLet, dbo.ViewSMSCardHolders.EmployeeNumber, dbo.ViewSMSCardHolders.CompanyID, dbo.ViewSMSCardHolders.CardNumber, dbo.ViewSMSCardHolders.CustomerCodeNumber FROM dbo.ViewAccessRights LEFT OUTER JOIN dbo.ViewSMSCardHolders ON dbo.ViewAccessRights.CardID = dbo.ViewSMSCardHolders.CardID"
-        } else {
-            $SQLCommand = "Select CardID, AccessGroupName from ViewAccessRights"
-        }
-
+        [String] $SQLCommand = "SELECT dbo.ViewAccessRights.*, dbo.ViewSMSCardHolders.FirstName, dbo.ViewSMSCardHolders.LastName, dbo.ViewSMSCardHolders.InitLet, dbo.ViewSMSCardHolders.EmployeeNumber, dbo.ViewSMSCardHolders.CompanyID, dbo.ViewSMSCardHolders.CardNumber, dbo.ViewSMSCardHolders.CustomerCodeNumber FROM dbo.ViewAccessRights LEFT OUTER JOIN dbo.ViewSMSCardHolders ON dbo.ViewAccessRights.CardID = dbo.ViewSMSCardHolders.CardID"
+        
         [String]$WHERE = ""
 
         If ($CardID) {
@@ -675,6 +668,7 @@ function Get-SMSAccessRights {
                 $WHERE = $WHERE + " AND "
             }
             $WHERE = $WHERE + "dbo.ViewSMSCardHolders.CardNumber = $CardNumber"
+                               dbo.ViewSMSCardHolders.CardNumber
         }
 
         If ($AccessGroupName) {
