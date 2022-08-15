@@ -1279,7 +1279,7 @@ function Sync-SMSwithAD {
                 $usersShould = $usersShould | Where-Object {$_ -ne $null}
 
                 #for a specifc door, determine who currently has access.  Note, the Where on EmployeeNumber only gets those that have a value and ignores those without an employee number.  This allows non-employees to be included in the access group
-                $usersDo = (Get-SMSAccessRights -AccessGroupName ($Door.Name.Replace($ADGroupPrefix, "")) -Extended | Where-Object -FilterScript {$_.EmployeeNumber.GetTypeCode() -eq 'String'}).CardNumber
+                $usersDo = (Get-SMSAccessRights -AccessGroupName ($Door.Name.Replace($ADGroupPrefix, "")) | Where-Object -FilterScript {$_.EmployeeNumber.GetTypeCode() -eq 'String'}).CardNumber
 
                 $toRemove = @()
                 $toAdd = @()
@@ -1345,7 +1345,7 @@ function Sync-SMSwithAD {
 
                     #Get what it is
                     $card = Get-SMSCard -EmployeeReference ($User.EmployeeID) -SMSConnection $SMSConnection
-                    $smscardcodes = Get-SMSAccessRights -CardID ($card.CardID) -Extended -SMSConnection $SMSConnection
+                    $smscardcodes = Get-SMSAccessRights -CardID ($card.CardID) -SMSConnection $SMSConnection
                     if (!$smscardcodes) {
                         $smscodes = @()
                     } else {
