@@ -53,9 +53,9 @@ function New-SMSCommand {
         $SMSConnection = $this.SMSServerConnection
         $SQLCommand = $this.SQLCommand
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         $this.RecordCount = $retvalue.RecordCount
     }
@@ -64,9 +64,9 @@ function New-SMSCommand {
         $SMSConnection = $this.SMSServerConnection
         $SQLCommand = "SELECT RecordStatus FROM DataImportTable WHERE RecordCount = " + $this.RecordCount
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         return $retvalue.RecordStatus
     }
@@ -75,9 +75,9 @@ function New-SMSCommand {
         $SMSConnection = $this.SMSServerConnection
         $SQLCommand = "SELECT Message FROM MessageTable WHERE RecordStatus = " + $this.RecordStatus
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         return $retvalue.Message
     }
@@ -628,9 +628,9 @@ function Get-SMSAccessCode {
         }
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         return $retvalue
 	}
@@ -690,9 +690,9 @@ function Get-SMSAccessRights {
         }
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         return $retvalue
 	}
@@ -796,9 +796,9 @@ function Get-SMSCard {
         }
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         return $retvalue
 	}
@@ -887,9 +887,9 @@ function Get-SMSAlarms {
         $SQLCommand = $SQLCommand + " ORDER BY DateTimeOfTxn DESC"
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         return $retvalue
 	}
@@ -978,9 +978,9 @@ function Get-SMSActivity {
         $SQLCommand = $SQLCommand + " ORDER BY DateTimeOfTxn DESC"
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAXTxn" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         return $retvalue
 	}
@@ -1057,9 +1057,9 @@ function Get-SMSCardLocation {
         $SQLCommand = $SQLCommand + " ORDER BY LastTxnDateTime DESC"
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database "multiMAX" -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         return $retvalue
 	}
@@ -1132,7 +1132,7 @@ function Replace-SMSCard {
         if (!$NewCustomerCode) {
             $NewCustomerCode = $CustomerCode
         }
-        #Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database multiMax -Query "Update dbo.CardInfoTable SET CardNumber = $NewCardNumber, CustomerCodeNumber = $NewCustomerCodeNumber WHERE CardNumber = $CardNumber AND CustomerCodeNumber = $CustomerCode"
+        #Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database multiMax -Query "Update dbo.CardInfoTable SET CardNumber = $NewCardNumber, CustomerCodeNumber = $NewCustomerCodeNumber WHERE CardNumber = $CardNumber AND CustomerCodeNumber = $CustomerCode" -TrustServerCertificate
         Copy-SMSCard -CopyCardNumber $CardNumber -CardNumber $NewCardNumber -CopyCustomerCode $CustomerCode -CustomerCode $NewCustomerCode -SMSConnection $SMSConnection
         Disable-SMSCard -CardNumber $CardNumber -CustomerCode $CustomerCode -SMSConnection $SMSConnection
 	}
@@ -1148,9 +1148,9 @@ function Get-SMSRecordsToProcess {
         [String] $SQLCommand = "SELECT Count([RecordStatus]) AS RecordsToProcess FROM [multiMAXImport].[dbo].[DataImportTable] WHERE [RecordStatus] = 0"
 
         if (!$SMSConnection.SMSImportDatabaseUsername) {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         } else {
-            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30
+            $retvalue = Invoke-Sqlcmd -ServerInstance $SMSConnection.SMSDatabaseServer -Database $SMSConnection.SMSImportDatabase -Username $SMSConnection.SMSImportDatabaseUsername -Password $SMSConnection.SMSImportDatabasePassword -Query $SQLCommand -QueryTimeout 30 -TrustServerCertificate
         }
         return $retvalue.RecordsToProcess
 	}
