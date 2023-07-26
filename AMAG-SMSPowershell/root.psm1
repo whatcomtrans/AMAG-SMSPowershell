@@ -668,7 +668,6 @@ function Get-SMSAccessRights {
                 $WHERE = $WHERE + " AND "
             }
             $WHERE = $WHERE + "dbo.ViewSMSCardHolders.CardNumber = $CardNumber"
-                               dbo.ViewSMSCardHolders.CardNumber
         }
 
         If ($AccessGroupName) {
