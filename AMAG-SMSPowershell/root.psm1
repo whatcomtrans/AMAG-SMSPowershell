@@ -168,7 +168,7 @@ function Disable-SMSCard {
 	Process {
         [hashtable] $RecordNamedValues = @{}
         
-        $RecordNamedValues.Add("RecordRequest",2)
+        $RecordNamedValues.Add("RecordRequest",2)  # Force inactive
         $RecordNamedValues.Add("RecordStatus",0)
         $RecordNamedValues.Add("ImportNow",1)
         $RecordNamedValues.Add("CustomerCode",$CustomerCode)
@@ -258,7 +258,7 @@ function Enable-SMSCard {
         
         $SMSCommand = (New-SMSCommand -NamedValues $RecordNamedValues -SMSServerConnection $SMSConnection)
         $SMSCommands = $SMSCommands + $SMSCommand
-        If ($PSCmdlet.ShouldProcess("$Item","Disable Card")) {
+        If ($PSCmdlet.ShouldProcess("$Item","Enable Card")) {
             $SMSCommand.Execute()
         }
         
@@ -293,8 +293,8 @@ function Set-SMSCard {
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="Date card is set to become active")]
         [DateTime]$ActiveDate,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true,HelpMessage="Date card is set to become in-active")]
-        [alias("accountExpires")]
-        [DateTime]$InactiveDate,
+        [alias("accountExpires", "InactiveDate")]
+        [DateTime]$ExpiryDate,
         [Parameter(Mandatory=$true,HelpMessage="Customer/Facility Code")]
         [int]$CustomerCode,
         [Parameter(Mandatory=$false,HelpMessage="Other attributes to set on the card as a hashtable of name value pairs using the database field names and data types of the DataImportTable.")]
